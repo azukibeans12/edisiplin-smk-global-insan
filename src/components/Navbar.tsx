@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, ClipboardPlus, LayoutDashboard, LogIn, LogOut, Menu, Settings, ShieldCheck, Users, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { RulesModal } from "@/components/RulesModal";
-import { Avatar } from "@/components/Avatar";
 
 export function Navbar() {
   const { user, mode, pendingCount, logout } = useApp();
@@ -40,20 +39,23 @@ export function Navbar() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            {user ? (
-              <Avatar name={user.full_name} src={user.avatar_url} size="sm" variant="staff" />
-            ) : (
-              <div className="w-9 h-9 rounded-xl bg-blue-700 text-white flex items-center justify-center font-extrabold text-sm shadow-sm group-hover:bg-blue-800 transition">
-                GI
-              </div>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-smk-global-insan.jpg"
+              alt="Logo SMK Global Insan Tangerang"
+              className="w-10 h-10 rounded-xl object-contain bg-white border border-slate-200 p-0.5 shadow-xs group-hover:border-blue-300 transition"
+            />
             <div>
               <div className="text-sm font-bold text-slate-900 leading-tight">E-Disiplin SMK Global Insan</div>
               <div className="text-[11px] text-slate-500 leading-tight">
                 {user ? (
                   <span className="inline-flex items-center gap-1 text-blue-700 font-medium">
                     <ShieldCheck className="w-3 h-3" />
-                    {user.role === "admin" ? "Admin / Guru BK" : "Guru"} • {user.full_name}
+                    {user.role === "admin"
+                      ? user.full_name.toLowerCase().includes("admin")
+                        ? user.full_name
+                        : `Admin / Guru BK • ${user.full_name}`
+                      : `Guru • ${user.full_name}`}
                   </span>
                 ) : (
                   "Tangerang • Berakhlak, Berilmu, Berprestasi"

@@ -41,9 +41,12 @@ export default function LoginPage() {
 
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-5">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-700 text-white flex items-center justify-center font-extrabold text-lg">
-            GI
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-smk-global-insan.jpg"
+            alt="Logo SMK Global Insan Tangerang"
+            className="w-16 h-16 mx-auto rounded-2xl object-contain bg-white border border-slate-200 p-1 shadow-xs"
+          />
           <h1 className="text-lg font-extrabold text-slate-900">Login Guru &amp; Admin / BK</h1>
           <p className="text-xs text-slate-500">
             Halaman ini khusus untuk tenaga pendidik SMK Global Insan Tangerang. Siswa &amp; Orang Tua cukup mencari langsung dari Beranda.

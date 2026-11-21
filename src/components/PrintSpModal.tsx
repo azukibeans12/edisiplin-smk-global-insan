@@ -66,10 +66,18 @@ export function PrintSpModal({ student, approvedRecords, onClose }: Props) {
 
           {/* Printable Letter Area */}
           <div className="print-sheet p-6 rounded-xl border border-slate-300 bg-white text-slate-900 space-y-4 text-xs leading-relaxed">
-            <div className="text-center border-b-2 border-slate-900 pb-3">
-              <div className="text-base font-extrabold tracking-wide">SMK GLOBAL INSAN TANGERANG</div>
-              <div className="text-[11px] text-slate-600">Kecamatan Legok, Kabupaten Tangerang, Provinsi Banten</div>
-              <div className="text-[11px] italic text-slate-600">&quot;Berakhlak, Berilmu, Berprestasi&quot;</div>
+            <div className="flex items-center justify-center gap-4 border-b-2 border-slate-900 pb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-smk-global-insan.jpg"
+                alt="Logo SMK Global Insan"
+                className="w-14 h-14 object-contain shrink-0"
+              />
+              <div className="text-center">
+                <div className="text-base font-extrabold tracking-wide">SMK GLOBAL INSAN TANGERANG</div>
+                <div className="text-[11px] text-slate-600">Kecamatan Legok, Kabupaten Tangerang, Provinsi Banten</div>
+                <div className="text-[11px] italic text-slate-600">&quot;Berakhlak, Berilmu, Berprestasi&quot;</div>
+              </div>
             </div>
 
             <div className="text-center space-y-0.5">

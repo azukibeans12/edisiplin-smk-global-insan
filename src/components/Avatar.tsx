@@ -57,6 +57,13 @@ export function Avatar({ name, src, size = "md", variant = "student", editable =
           alt={name}
           className={`${sizeClass} rounded-full object-cover border-2 border-white ring-1 ring-slate-200 shadow-xs bg-slate-100`}
         />
+      ) : variant === "staff" ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/logo-smk-global-insan.jpg"
+          alt={`${name} — SMK Global Insan`}
+          className={`${sizeClass} rounded-full object-contain border-2 border-white ring-1 ring-slate-200 shadow-xs bg-white p-0.5`}
+        />
       ) : (
         <div
           className={`${sizeClass} rounded-full border font-extrabold flex flex-col items-center justify-center select-none shadow-xs ${palette}`}
