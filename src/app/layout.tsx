@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import { Navbar } from "@/components/Navbar";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "E-Disiplin — SMK Global Insan Tangerang",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             SMK Global Insan Tangerang • Religius • Disiplin • Berkarakter • Berprestasi • Berdaya Saing
           </footer>
         </AppProvider>
+        <Analytics />
       </body>
     </html>
   );
