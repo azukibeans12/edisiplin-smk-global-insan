@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Search, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { useApp, type PublicSearchHit } from "@/lib/store";
 import { getDisiplinStage } from "@/lib/disiplin";
 import { RulesModal } from "@/components/RulesModal";
@@ -45,10 +45,6 @@ export default function HomePage() {
       <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-xs space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              Portal Transparansi Siswa &amp; Orang Tua
-            </span>
             <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
               Cek Poin &amp; Riwayat Kedisiplinan Siswa
             </h1>
