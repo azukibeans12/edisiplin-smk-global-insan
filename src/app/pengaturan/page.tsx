@@ -7,6 +7,7 @@ import { useApp } from "@/lib/store";
 import { DISIPLIN_STAGES } from "@/lib/disiplin";
 import { compressImageFile } from "@/lib/image-compress";
 import { Avatar } from "@/components/Avatar";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 import type { GradeLevel, MajorType, RuleType, StaffProfile, StaffRole } from "@/types/database";
 
 export default function PengaturanPage() {
@@ -50,6 +51,11 @@ export default function PengaturanPage() {
   const [sClearPhoto, setSClearPhoto] = useState(false);
   const [sErr, setSErr] = useState("");
   const [sSaving, setSSaving] = useState(false);
+
+  // Confirm Delete Teacher Modal
+  const [deleteTarget, setDeleteTarget] = useState<StaffProfile | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState("");
 
   // Add Class Form
   const [clsName, setClsName] = useState("");
@@ -116,16 +122,22 @@ export default function PengaturanPage() {
     }
   };
 
-  const handleDeleteStaff = async (st: StaffProfile) => {
-    const ok = window.confirm(
-      `Hapus permanen akun guru/staff "${st.full_name}" (@${st.username})?\n\nCatatan: Riwayat poin yang pernah dilaporkannya tetap aman tersimpan.`
-    );
-    if (!ok) return;
-    const res = await deleteStaff(st.id);
+  const handleDeleteStaff = (st: StaffProfile) => {
+    setDeleteErr("");
+    setDeleteTarget(st);
+  };
+
+  const confirmDeleteStaff = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteErr("");
+    const res = await deleteStaff(deleteTarget.id);
+    setDeleting(false);
     if (!res.ok) {
-      window.alert(res.error || "Gagal menghapus akun guru.");
+      setDeleteErr(res.error || "Gagal menghapus akun guru.");
       return;
     }
+    setDeleteTarget(null);
     setStaffModalOpen(false);
   };
 
@@ -567,6 +579,22 @@ export default function PengaturanPage() {
             </div>
           </form>
         </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          title="HAPUS GURU?"
+          targetName={deleteTarget.full_name}
+          targetSub={`@${deleteTarget.username} • ${deleteTarget.role === "admin" ? "Admin / Guru BK" : "Guru"}`}
+          targetAvatar={deleteTarget.avatar_url}
+          variant="staff"
+          description="Akun login guru/staff ini akan dihapus permanen. Catatan pelanggaran yang pernah dilaporkannya tetap tersimpan dengan aman."
+          tip='Jika hanya ingin mencabut akses login sementara, cukup Edit lalu nonaktifkan centang "Akun Aktif".'
+          loading={deleting}
+          error={deleteErr}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteStaff}
+        />
       )}
     </div>
   );

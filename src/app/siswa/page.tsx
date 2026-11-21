@@ -7,6 +7,7 @@ import { useApp } from "@/lib/store";
 import { getDisiplinStage } from "@/lib/disiplin";
 import { compressImageFile } from "@/lib/image-compress";
 import { Avatar } from "@/components/Avatar";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 import type { StudentWithScore } from "@/types/database";
 
 function toTitleCase(input: string): string {
@@ -41,6 +42,11 @@ export default function SiswaListPage() {
   const [clearPhoto, setClearPhoto] = useState(false);
   const [formErr, setFormErr] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Confirm Delete Modal state
+  const [deleteTarget, setDeleteTarget] = useState<StudentWithScore | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState("");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -116,16 +122,22 @@ export default function SiswaListPage() {
     }
   };
 
-  const handleDeleteStudent = async (s: StudentWithScore) => {
-    const ok = window.confirm(
-      `Hapus permanen siswa "${s.full_name}" (${s.class_name}) beserta seluruh riwayat poinnya?\n\nTip: Jika siswa sudah lulus/pindah dan ingin riwayat tetap tersimpan, cukup edit lalu nonaktifkan status "Siswa Aktif".`
-    );
-    if (!ok) return;
-    const res = await deleteStudent(s.id);
+  const handleDeleteStudent = (s: StudentWithScore) => {
+    setDeleteErr("");
+    setDeleteTarget(s);
+  };
+
+  const confirmDeleteStudent = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteErr("");
+    const res = await deleteStudent(deleteTarget.id);
+    setDeleting(false);
     if (!res.ok) {
-      window.alert(res.error || "Gagal menghapus siswa.");
+      setDeleteErr(res.error || "Gagal menghapus siswa.");
       return;
     }
+    setDeleteTarget(null);
     setModalOpen(false);
   };
 
@@ -485,6 +497,22 @@ export default function SiswaListPage() {
             </div>
           </form>
         </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          title="HAPUS SISWA?"
+          targetName={deleteTarget.full_name}
+          targetSub={`NISN: ${deleteTarget.nisn} • ${deleteTarget.class_name}`}
+          targetAvatar={deleteTarget.avatar_url}
+          variant="student"
+          description="Data siswa beserta seluruh riwayat poin dan surat peringatannya akan dihapus permanen dan tidak bisa dikembalikan."
+          tip='Jika siswa sudah lulus atau pindah dan ingin riwayat tetap tersimpan, cukup Edit lalu nonaktifkan centang "Siswa Aktif".'
+          loading={deleting}
+          error={deleteErr}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteStudent}
+        />
       )}
     </div>
   );
