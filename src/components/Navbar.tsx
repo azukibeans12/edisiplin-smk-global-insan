@@ -38,15 +38,15 @@ export function Navbar() {
       <header className="no-print sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-3 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo-smk-global-insan.jpg"
               alt="Logo SMK Global Insan Tangerang"
-              className="w-10 h-10 rounded-xl object-contain bg-white border border-slate-200 p-0.5 shadow-xs group-hover:border-blue-300 transition"
+              className="w-12 h-12 sm:w-14 sm:h-14 object-contain shrink-0"
             />
             <div>
-              <div className="text-sm font-bold text-slate-900 leading-tight">E-Disiplin SMK Global Insan</div>
+              <div className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">E-Disiplin SMK Global Insan</div>
               <div className="text-[11px] text-slate-500 leading-tight">
                 {user ? (
                   <span className="inline-flex items-center gap-1 text-blue-700 font-medium">

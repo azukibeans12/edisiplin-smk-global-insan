@@ -71,7 +71,7 @@ export function PrintSpModal({ student, approvedRecords, onClose }: Props) {
               <img
                 src="/logo-smk-global-insan.jpg"
                 alt="Logo SMK Global Insan"
-                className="w-14 h-14 object-contain shrink-0"
+                className="w-16 h-16 object-contain shrink-0"
               />
               <div className="text-center">
                 <div className="text-base font-extrabold tracking-wide">SMK GLOBAL INSAN TANGERANG</div>

@@ -45,7 +45,7 @@ export default function LoginPage() {
           <img
             src="/logo-smk-global-insan.jpg"
             alt="Logo SMK Global Insan Tangerang"
-            className="w-16 h-16 mx-auto rounded-2xl object-contain bg-white border border-slate-200 p-1 shadow-xs"
+            className="w-24 h-24 mx-auto object-contain"
           />
           <h1 className="text-lg font-extrabold text-slate-900">Login Guru &amp; Admin / BK</h1>
           <p className="text-xs text-slate-500">
