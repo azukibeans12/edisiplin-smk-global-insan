@@ -289,7 +289,7 @@ export default function PengaturanPage() {
           {/* Classes / Rombel Management */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Daftar Kelas ({classes.length} Rombel)</h2>
+              <h2 className="text-sm font-bold text-slate-900">Daftar Kelas ({classes.length})</h2>
               <p className="text-xs text-slate-500">Tambahkan kelas baru untuk tahun ajaran berikutnya.</p>
             </div>
 

@@ -261,7 +261,7 @@ export default function SiswaListPage() {
           onChange={(e) => setClassFilter(e.target.value)}
           className="px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-medium"
         >
-          <option value="ALL">Semua Kelas ({classes.length} Rombel)</option>
+          <option value="ALL">Semua Kelas</option>
           {classes.map((c) => (
             <option key={c.id} value={c.name}>{c.name} — {c.wali_kelas_name}</option>
           ))}
