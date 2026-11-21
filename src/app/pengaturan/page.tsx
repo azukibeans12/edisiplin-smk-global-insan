@@ -38,7 +38,7 @@ export default function PengaturanPage() {
   const [staffModalOpen, setStaffModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffProfile | null>(null);
   const [sName, setSName] = useState("");
-  const [sEmail, setSEmail] = useState("");
+  const [sUsername, setSUsername] = useState("");
   const [sPassword, setSPassword] = useState("globalinsan123");
   const [sRole, setSRole] = useState<StaffRole>("guru");
   const [sPhone, setSPhone] = useState("");
@@ -74,7 +74,7 @@ export default function PengaturanPage() {
   const openAddStaff = () => {
     setEditingStaff(null);
     setSName("");
-    setSEmail("");
+    setSUsername("");
     setSPassword("globalinsan123");
     setSRole("guru");
     setSPhone("");
@@ -90,7 +90,7 @@ export default function PengaturanPage() {
   const openEditStaff = (st: StaffProfile) => {
     setEditingStaff(st);
     setSName(st.full_name);
-    setSEmail(st.email);
+    setSUsername(st.username);
     setSRole(st.role);
     setSPhone(st.phone_wa || "");
     setSWaliClass(st.wali_class || "");
@@ -123,7 +123,7 @@ export default function PengaturanPage() {
     if (editingStaff) {
       const res = await updateStaff(editingStaff.id, {
         full_name: sName,
-        email: sEmail,
+        username: sUsername,
         role: sRole,
         phone_wa: sPhone || null,
         wali_class: sWaliClass || null,
@@ -140,7 +140,7 @@ export default function PengaturanPage() {
     } else {
       const res = await addStaff({
         full_name: sName,
-        email: sEmail,
+        username: sUsername,
         password: sPassword,
         role: sRole,
         phone_wa: sPhone || null,
@@ -258,7 +258,7 @@ export default function PengaturanPage() {
                         {!st.is_active && <span className="px-1.5 py-0.2 rounded bg-slate-200 text-slate-600 text-[10px]">Nonaktif</span>}
                       </div>
                       <div className="text-[11px] text-slate-500">
-                        {st.email}
+                        <span className="font-mono font-semibold text-slate-700">@{st.username}</span>
                         {st.wali_class ? ` • Wali: ${st.wali_class}` : ""}
                       </div>
                     </div>
@@ -471,15 +471,16 @@ export default function PengaturanPage() {
                 <input required value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Contoh: Budi Santoso, S.Pd." className="w-full px-3 py-2 rounded-lg border border-slate-300" />
               </div>
               <div>
-                <label className="block font-semibold mb-1">Email Login *</label>
+                <label className="block font-semibold mb-1">Username Login * <span className="font-normal text-slate-500">(bebas tanpa perlu email asli)</span></label>
                 <input
                   required
-                  type="email"
+                  type="text"
+                  autoCapitalize="none"
                   disabled={Boolean(editingStaff && mode === "supabase")}
-                  value={sEmail}
-                  onChange={(e) => setSEmail(e.target.value)}
-                  placeholder="guru@smkglobalinsan.sch.id"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 disabled:bg-slate-100"
+                  value={sUsername}
+                  onChange={(e) => setSUsername(e.target.value.replace(/\s+/g, "").toLowerCase())}
+                  placeholder="Contoh: pak.budi atau zuraida"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono disabled:bg-slate-100"
                 />
               </div>
 

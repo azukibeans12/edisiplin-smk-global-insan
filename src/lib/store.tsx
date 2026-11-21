@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
+import { normalizeUsername, toAuthEmail } from "@/lib/auth-utils";
 import {
   SEED_CLASSES,
   SEED_DEMO_RECORDS,
@@ -67,7 +68,7 @@ interface UpdateStudentInput {
 
 interface CreateStaffInput {
   full_name: string;
-  email: string;
+  username: string;
   password?: string;
   role: StaffRole;
   phone_wa?: string | null;
@@ -78,7 +79,7 @@ interface CreateStaffInput {
 
 interface UpdateStaffInput {
   full_name?: string;
-  email?: string;
+  username?: string;
   role?: StaffRole;
   phone_wa?: string | null;
   wali_class?: string | null;
@@ -268,6 +269,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (staffRes.data) {
       const mappedStaff = (staffRes.data as StaffProfile[]).map((s) => ({
         ...s,
+        username: s.username || normalizeUsername(s.email),
         avatar_url: s.avatar_url ?? null,
       }));
       setStaffList(mappedStaff);
@@ -291,12 +293,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const saved = window.localStorage.getItem(STORAGE_KEY);
           if (saved) {
             const parsed = JSON.parse(saved);
-            const loadedStaff: StaffProfile[] = Array.isArray(parsed.staffList) ? parsed.staffList : SEED_STAFF;
+            const loadedStaff: StaffProfile[] = Array.isArray(parsed.staffList)
+              ? parsed.staffList.map((s: StaffProfile) => ({
+                  ...s,
+                  username: s.username || normalizeUsername(s.email || s.full_name),
+                }))
+              : SEED_STAFF;
             if (Array.isArray(parsed.classes)) setClasses(parsed.classes);
             if (Array.isArray(parsed.students)) setRawStudents(parsed.students);
             if (Array.isArray(parsed.rules)) setRules(parsed.rules);
             if (Array.isArray(parsed.records)) setRecords(parsed.records);
-            if (Array.isArray(parsed.staffList)) setStaffList(parsed.staffList);
+            if (Array.isArray(parsed.staffList)) setStaffList(loadedStaff);
             if (Array.isArray(parsed.warningLogs)) setWarningLogs(parsed.warningLogs);
             if (parsed.userId) {
               const found = loadedStaff.find((s) => s.id === parsed.userId) || null;
@@ -342,13 +349,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const pendingCount = useMemo(() => records.filter((r) => r.status === "pending").length, [records]);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
+    async (usernameOrEmail: string, password: string): Promise<{ ok: boolean; error?: string }> => {
+      const cleanInput = usernameOrEmail.trim().toLowerCase();
+      const authEmail = toAuthEmail(cleanInput);
+      const cleanUser = normalizeUsername(cleanInput);
+
       if (mode === "demo") {
         const match = staffList.find(
-          (s) => s.is_active && s.email.toLowerCase() === email.trim().toLowerCase()
+          (s) =>
+            s.is_active &&
+            (s.username.toLowerCase() === cleanUser ||
+              s.email.toLowerCase() === cleanInput ||
+              s.email.toLowerCase() === authEmail)
         );
         if (!match) {
-          return { ok: false, error: "Email tidak terdaftar atau akun dinonaktifkan. Cek daftar Guru di Pengaturan atau gunakan tombol Login Cepat Demo." };
+          return { ok: false, error: "Username tidak ditemukan atau akun dinonaktifkan. Coba: admin atau avandi." };
         }
         if (!password || password.length < 4) {
           return { ok: false, error: "Masukkan kata sandi (minimal 4 karakter di mode demo)." };
@@ -360,9 +375,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const sb = getSupabaseBrowserClient();
       if (!sb) return { ok: false, error: "Konfigurasi Supabase belum lengkap." };
-      const { data, error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
+      const { data, error } = await sb.auth.signInWithPassword({ email: authEmail, password });
       if (error || !data.user) {
-        return { ok: false, error: error?.message || "Email atau kata sandi salah." };
+        return { ok: false, error: "Username atau kata sandi salah." };
       }
       const { data: prof, error: profErr } = await sb
         .from("staff_profiles")
@@ -373,7 +388,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         await sb.auth.signOut();
         return { ok: false, error: "Akun belum terdaftar di tabel staff_profiles." };
       }
-      const staffUser: StaffProfile = { ...(prof as StaffProfile), avatar_url: (prof as StaffProfile).avatar_url ?? null };
+      const rawProf = prof as StaffProfile;
+      const staffUser: StaffProfile = {
+        ...rawProf,
+        username: rawProf.username || normalizeUsername(rawProf.email),
+        avatar_url: rawProf.avatar_url ?? null,
+      };
       setUser(staffUser);
       await loadSupabaseData(staffUser);
       return { ok: true };
@@ -890,10 +910,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addStaff = useCallback(
     async (input: CreateStaffInput): Promise<{ ok: boolean; error?: string }> => {
       if (!user || user.role !== "admin") return { ok: false, error: "Khusus Admin/BK." };
-      const emailClean = input.email.trim().toLowerCase();
-      if (!input.full_name.trim() || !emailClean) return { ok: false, error: "Nama dan email wajib diisi." };
-      if (staffList.some((s) => s.email.toLowerCase() === emailClean)) {
-        return { ok: false, error: "Email guru/staff tersebut sudah terdaftar." };
+      const cleanUser = normalizeUsername(input.username);
+      const authEmail = toAuthEmail(input.username);
+      if (!input.full_name.trim() || !cleanUser) {
+        return { ok: false, error: "Nama lengkap dan username (huruf/angka tanpa spasi) wajib diisi." };
+      }
+      if (staffList.some((s) => s.username.toLowerCase() === cleanUser || s.email.toLowerCase() === authEmail)) {
+        return { ok: false, error: "Username tersebut sudah dipakai akun lain." };
       }
 
       if (mode === "supabase") {
@@ -910,7 +933,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             full_name: input.full_name.trim(),
-            email: emailClean,
+            username: cleanUser,
             password: input.password || "globalinsan123",
             role: input.role,
             phone_wa: input.phone_wa || null,
@@ -925,8 +948,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const newStaff: StaffProfile = {
         id: `staff-${Date.now()}`,
+        username: cleanUser,
         full_name: input.full_name.trim(),
-        email: emailClean,
+        email: authEmail,
         role: input.role,
         phone_wa: input.phone_wa?.trim() || null,
         wali_class: input.wali_class || null,
@@ -986,7 +1010,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ? {
               ...s,
               full_name: input.full_name ? input.full_name.trim() : s.full_name,
-              email: input.email ? input.email.trim().toLowerCase() : s.email,
+              username: input.username ? normalizeUsername(input.username) : s.username,
+              email: input.username ? toAuthEmail(input.username) : s.email,
               role: user.role === "admin" && input.role ? input.role : s.role,
               phone_wa: input.phone_wa !== undefined ? input.phone_wa?.trim() || null : s.phone_wa,
               wali_class: input.wali_class !== undefined ? input.wali_class : s.wali_class,

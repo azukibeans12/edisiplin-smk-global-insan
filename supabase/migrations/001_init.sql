@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- 1. STAFF PROFILES (Admin/BK & Guru — linked to Supabase Auth)
 CREATE TABLE IF NOT EXISTS public.staff_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('admin', 'guru')) DEFAULT 'guru',

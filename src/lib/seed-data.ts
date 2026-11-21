@@ -1,16 +1,16 @@
 import type { PointRecord, Rule, SchoolClass, StaffProfile, Student, WarningLog } from "@/types/database";
 
 export const SEED_STAFF: StaffProfile[] = [
-  { id: "staff-bk", full_name: "Admin / Guru BK", email: "bk@smkglobalinsan.sch.id", role: "admin", phone_wa: null, wali_class: null, avatar_url: null, is_active: true },
-  { id: "staff-avandi", full_name: "Avandi Benardi", email: "affandi.winardi@gmail.com", role: "guru", phone_wa: null, wali_class: "XII TKJ", avatar_url: null, is_active: true },
-  { id: "staff-siti", full_name: "Siti Hasanah", email: "nh.hasanah2021@gmail.com", role: "guru", phone_wa: null, wali_class: "XI-TSM", avatar_url: null, is_active: true },
-  { id: "staff-sri", full_name: "Sri Lestari Pudyastuti", email: "pdystslp@gmail.com", role: "guru", phone_wa: null, wali_class: "XI-TKJ", avatar_url: null, is_active: true },
-  { id: "staff-novita", full_name: "Novita Sari", email: "vta.novi@gmail.com", role: "guru", phone_wa: null, wali_class: "XI-BC", avatar_url: null, is_active: true },
-  { id: "staff-zuraida", full_name: "Zuraida", email: "zuraiedha86@yahoo.com", role: "guru", phone_wa: null, wali_class: "X TSM", avatar_url: null, is_active: true },
-  { id: "staff-alvi", full_name: "Alvi Fauzul Fikri", email: "alvifauzul93@gmail.com", role: "guru", phone_wa: null, wali_class: "X TKJ", avatar_url: null, is_active: true },
-  { id: "staff-suprihatin", full_name: "Suprihatin", email: "priealifalifa@gmail.com", role: "guru", phone_wa: null, wali_class: "X-BC", avatar_url: null, is_active: true },
-  { id: "staff-ahdi", full_name: "Ahdi Rahmadi", email: "ahdirahmadi00@gmail.com", role: "guru", phone_wa: null, wali_class: null, avatar_url: null, is_active: true },
-  { id: "staff-moeayas", full_name: "Moeayas Sugianto", email: "ayazcuex@gmail.com", role: "guru", phone_wa: null, wali_class: null, avatar_url: null, is_active: true },
+  { id: "staff-bk", username: "admin", full_name: "Admin / Guru BK", email: "admin@globalinsan.sch.id", role: "admin", phone_wa: null, wali_class: null, avatar_url: null, is_active: true },
+  { id: "staff-avandi", username: "avandi", full_name: "Avandi Benardi", email: "avandi@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: "XII TKJ", avatar_url: null, is_active: true },
+  { id: "staff-siti", username: "siti", full_name: "Siti Hasanah", email: "siti@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: "XI-TSM", avatar_url: null, is_active: true },
+  { id: "staff-sri", username: "sri", full_name: "Sri Lestari Pudyastuti", email: "sri@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: "XI-TKJ", avatar_url: null, is_active: true },
+  { id: "staff-novita", username: "novita", full_name: "Novita Sari", email: "novita@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: "XI-BC", avatar_url: null, is_active: true },
+  { id: "staff-zuraida", username: "zuraida", full_name: "Zuraida", email: "zuraida@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: "X TSM", avatar_url: null, is_active: true },
+  { id: "staff-alvi", username: "alvi", full_name: "Alvi Fauzul Fikri", email: "alvi@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: "X TKJ", avatar_url: null, is_active: true },
+  { id: "staff-suprihatin", username: "suprihatin", full_name: "Suprihatin", email: "suprihatin@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: "X-BC", avatar_url: null, is_active: true },
+  { id: "staff-ahdi", username: "ahdi", full_name: "Ahdi Rahmadi", email: "ahdi@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: null, avatar_url: null, is_active: true },
+  { id: "staff-moeayas", username: "moeayas", full_name: "Moeayas Sugianto", email: "moeayas@globalinsan.sch.id", role: "guru", phone_wa: null, wali_class: null, avatar_url: null, is_active: true },
 ];
 
 export const SEED_CLASSES: SchoolClass[] = [

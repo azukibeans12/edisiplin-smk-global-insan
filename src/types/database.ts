@@ -6,6 +6,7 @@ export type GradeLevel = "X" | "XI" | "XII";
 
 export interface StaffProfile {
   id: string;
+  username: string;
   full_name: string;
   email: string;
   role: StaffRole;

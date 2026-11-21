@@ -9,7 +9,7 @@ import { useApp } from "@/lib/store";
 export default function LoginPage() {
   const { mode, login, loginDemoAs } = useApp();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +18,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-    const res = await login(email, password);
+    const res = await login(username, password);
     setSubmitting(false);
     if (!res.ok) {
       setError(res.error || "Gagal masuk.");
@@ -52,13 +52,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Email Sekolah</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Username</label>
             <input
-              type="email"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="bk@smkglobalinsan.sch.id"
+              autoCapitalize="none"
+              autoCorrect="off"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Contoh: admin atau avandi"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none text-sm"
             />
           </div>
