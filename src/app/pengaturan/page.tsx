@@ -21,6 +21,7 @@ export default function PengaturanPage() {
     toggleRuleActive,
     addStaff,
     updateStaff,
+    deleteStaff,
     addClass,
     resetDemoData,
   } = useApp();
@@ -113,6 +114,19 @@ export default function PengaturanPage() {
     } catch (err) {
       setSErr(err instanceof Error ? err.message : "Gagal memproses foto.");
     }
+  };
+
+  const handleDeleteStaff = async (st: StaffProfile) => {
+    const ok = window.confirm(
+      `Hapus permanen akun guru/staff "${st.full_name}" (@${st.username})?\n\nCatatan: Riwayat poin yang pernah dilaporkannya tetap aman tersimpan.`
+    );
+    if (!ok) return;
+    const res = await deleteStaff(st.id);
+    if (!res.ok) {
+      window.alert(res.error || "Gagal menghapus akun guru.");
+      return;
+    }
+    setStaffModalOpen(false);
   };
 
   const handleSaveStaff = async (e: React.FormEvent) => {
@@ -280,6 +294,15 @@ export default function PengaturanPage() {
                     >
                       <Pencil className="w-3 h-3" /> Edit
                     </button>
+                    {st.id !== user.id && (
+                      <button
+                        onClick={() => handleDeleteStaff(st)}
+                        title={`Hapus ${st.full_name}`}
+                        className="inline-flex items-center p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-rose-700 hover:border-rose-200"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -523,11 +546,24 @@ export default function PengaturanPage() {
               {sErr && <div className="p-2.5 rounded-lg bg-rose-50 text-rose-700 font-semibold">{sErr}</div>}
             </div>
 
-            <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setStaffModalOpen(false)} className="px-3.5 py-2 rounded-lg border border-slate-300 font-semibold">Batal</button>
-              <button type="submit" disabled={sSaving} className="px-4 py-2 rounded-lg bg-blue-700 text-white font-bold disabled:opacity-50">
-                {sSaving ? "Menyimpan..." : editingStaff ? "Simpan Perubahan" : "Tambah Guru"}
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              {editingStaff && editingStaff.id !== user.id ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteStaff(editingStaff)}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold hover:bg-rose-100"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Hapus
+                </button>
+              ) : (
+                <span />
+              )}
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setStaffModalOpen(false)} className="px-3.5 py-2 rounded-lg border border-slate-300 font-semibold">Batal</button>
+                <button type="submit" disabled={sSaving} className="px-4 py-2 rounded-lg bg-blue-700 text-white font-bold disabled:opacity-50">
+                  {sSaving ? "Menyimpan..." : editingStaff ? "Simpan Perubahan" : "Tambah Guru"}
+                </button>
+              </div>
             </div>
           </form>
         </div>

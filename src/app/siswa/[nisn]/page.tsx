@@ -29,7 +29,7 @@ export default function StudentProfilePage() {
   const params = useParams();
   const router = useRouter();
   const nisn = String(params?.nisn || "");
-  const { user, loading, classes, getPublicStudentByNisn, updateStudent, updateStudentAvatar, voidPointRecord, warningLogs } = useApp();
+  const { user, loading, classes, getPublicStudentByNisn, updateStudent, deleteStudent, updateStudentAvatar, voidPointRecord, warningLogs } = useApp();
 
   const [student, setStudent] = useState<StudentWithScore | null>(null);
   const [timeline, setTimeline] = useState<PointRecord[]>([]);
@@ -131,6 +131,21 @@ export default function StudentProfilePage() {
     if (editNisn.trim() !== student.nisn) {
       router.replace(`/siswa/${editNisn.trim()}`);
     }
+  };
+
+  const handleDeleteCurrentStudent = async () => {
+    if (!student) return;
+    const ok = window.confirm(
+      `Hapus permanen siswa "${student.full_name}" (${student.class_name}) beserta seluruh riwayat poinnya?`
+    );
+    if (!ok) return;
+    const res = await deleteStudent(student.id);
+    if (!res.ok) {
+      setEditErr(res.error || "Gagal menghapus siswa.");
+      return;
+    }
+    setEditOpen(false);
+    router.replace("/siswa");
   };
 
   const handleVoid = async (rec: PointRecord) => {
@@ -473,9 +488,18 @@ export default function StudentProfilePage() {
               </div>
               {editErr && <div className="p-2.5 rounded-lg bg-rose-50 text-rose-700 font-semibold">{editErr}</div>}
             </div>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setEditOpen(false)} className="px-3.5 py-2 rounded-lg border border-slate-300 font-semibold">Batal</button>
-              <button type="submit" className="px-4 py-2 rounded-lg bg-blue-700 text-white font-bold">Simpan Perubahan</button>
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={handleDeleteCurrentStudent}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold hover:bg-rose-100"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Hapus Siswa
+              </button>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setEditOpen(false)} className="px-3.5 py-2 rounded-lg border border-slate-300 font-semibold">Batal</button>
+                <button type="submit" className="px-4 py-2 rounded-lg bg-blue-700 text-white font-bold">Simpan Perubahan</button>
+              </div>
             </div>
           </form>
         </div>

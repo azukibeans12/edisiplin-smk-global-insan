@@ -74,3 +74,43 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    return NextResponse.json(
+      {
+        error:
+          "SUPABASE_SERVICE_ROLE_KEY belum diatur. Hapus akun lewat Supabase Dashboard atau tambahkan SUPABASE_SERVICE_ROLE_KEY.",
+      },
+      { status: 501 }
+    );
+  }
+
+  try {
+    const body = await req.json();
+    const { id } = body as { id?: string };
+    if (!id) {
+      return NextResponse.json({ error: "ID guru tidak valid." }, { status: 400 });
+    }
+
+    const adminClient = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Deletes from auth.users which cascades to staff_profiles (point_records keep reported_by_name)
+    const { error } = await adminClient.auth.admin.deleteUser(id);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Terjadi kesalahan server." },
+      { status: 500 }
+    );
+  }
+}

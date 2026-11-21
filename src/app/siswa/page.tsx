@@ -19,7 +19,7 @@ function toTitleCase(input: string): string {
 }
 
 export default function SiswaListPage() {
-  const { user, loading, students, classes, addStudent, updateStudent, importStudentsBulk } = useApp();
+  const { user, loading, students, classes, addStudent, updateStudent, deleteStudent, importStudentsBulk } = useApp();
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("ALL");
   const [stageFilter, setStageFilter] = useState("ALL");
@@ -114,6 +114,19 @@ export default function SiswaListPage() {
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : "Gagal memproses foto.");
     }
+  };
+
+  const handleDeleteStudent = async (s: StudentWithScore) => {
+    const ok = window.confirm(
+      `Hapus permanen siswa "${s.full_name}" (${s.class_name}) beserta seluruh riwayat poinnya?\n\nTip: Jika siswa sudah lulus/pindah dan ingin riwayat tetap tersimpan, cukup edit lalu nonaktifkan status "Siswa Aktif".`
+    );
+    if (!ok) return;
+    const res = await deleteStudent(s.id);
+    if (!res.ok) {
+      window.alert(res.error || "Gagal menghapus siswa.");
+      return;
+    }
+    setModalOpen(false);
   };
 
   const handleSaveStudent = async (e: React.FormEvent) => {
@@ -332,16 +345,25 @@ export default function SiswaListPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="inline-flex items-center gap-2">
+                      <div className="inline-flex items-center gap-1.5">
                         {user.role === "admin" && (
-                          <button
-                            onClick={() => openEditModal(s)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-blue-700 hover:border-blue-200 font-semibold"
-                          >
-                            <Pencil className="w-3 h-3" /> Edit
-                          </button>
+                          <>
+                            <button
+                              onClick={() => openEditModal(s)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-blue-700 hover:border-blue-200 font-semibold"
+                            >
+                              <Pencil className="w-3 h-3" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStudent(s)}
+                              title={`Hapus ${s.full_name}`}
+                              className="inline-flex items-center p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-rose-700 hover:border-rose-200"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
-                        <Link href={`/siswa/${s.nisn}`} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">
+                        <Link href={`/siswa/${s.nisn}`} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline ml-1">
                           Detail <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </div>
@@ -442,11 +464,24 @@ export default function SiswaListPage() {
               {formErr && <div className="p-2.5 rounded-lg bg-rose-50 text-rose-700 font-semibold">{formErr}</div>}
             </div>
 
-            <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setModalOpen(false)} className="px-3.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold">Batal</button>
-              <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-blue-700 text-white text-xs font-bold disabled:opacity-50">
-                {saving ? "Menyimpan..." : editingStudent ? "Simpan Perubahan" : "Simpan Siswa"}
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              {editingStudent ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteStudent(editingStudent)}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-100"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Hapus
+                </button>
+              ) : (
+                <span />
+              )}
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setModalOpen(false)} className="px-3.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold">Batal</button>
+                <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-blue-700 text-white text-xs font-bold disabled:opacity-50">
+                  {saving ? "Menyimpan..." : editingStudent ? "Simpan Perubahan" : "Simpan Siswa"}
+                </button>
+              </div>
             </div>
           </form>
         </div>

@@ -141,12 +141,14 @@ interface AppContextValue {
   // Students
   addStudent: (input: CreateStudentInput) => Promise<{ ok: boolean; error?: string }>;
   updateStudent: (studentId: string, input: UpdateStudentInput) => Promise<{ ok: boolean; error?: string }>;
+  deleteStudent: (studentId: string) => Promise<{ ok: boolean; error?: string }>;
   updateStudentAvatar: (studentId: string, blob: Blob | null, dataUrl: string | null) => Promise<{ ok: boolean; error?: string }>;
   updateStudentPhone: (studentId: string, phone: string) => Promise<void>;
   importStudentsBulk: (items: CreateStudentInput[]) => Promise<{ added: number; skipped: number }>;
   // Staff & Classes
   addStaff: (input: CreateStaffInput) => Promise<{ ok: boolean; error?: string }>;
   updateStaff: (staffId: string, input: UpdateStaffInput) => Promise<{ ok: boolean; error?: string }>;
+  deleteStaff: (staffId: string) => Promise<{ ok: boolean; error?: string }>;
   addClass: (input: CreateClassInput) => Promise<{ ok: boolean; error?: string }>;
   // Rules & Warnings
   addRule: (input: CreateRuleInput) => Promise<{ ok: boolean; error?: string }>;
@@ -796,6 +798,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [user, mode, classes, rawStudents, persistDemo, loadSupabaseData]
   );
 
+  const deleteStudent = useCallback(
+    async (studentId: string): Promise<{ ok: boolean; error?: string }> => {
+      if (!user || user.role !== "admin") return { ok: false, error: "Khusus Admin/BK." };
+
+      if (mode === "supabase") {
+        const sb = getSupabaseBrowserClient();
+        if (!sb) return { ok: false, error: "Supabase error." };
+        const { error } = await sb.from("students").delete().eq("id", studentId);
+        if (error) return { ok: false, error: error.message };
+        await loadSupabaseData(user);
+        return { ok: true };
+      }
+
+      const nextStudents = rawStudents.filter((s) => s.id !== studentId);
+      const nextRecords = records.filter((r) => r.student_id !== studentId);
+      const nextWarnings = warningLogs.filter((w) => w.student_id !== studentId);
+      setRawStudents(nextStudents);
+      setRecords(nextRecords);
+      setWarningLogs(nextWarnings);
+      persistDemo({ students: nextStudents, records: nextRecords, warningLogs: nextWarnings });
+      return { ok: true };
+    },
+    [user, mode, rawStudents, records, warningLogs, persistDemo, loadSupabaseData]
+  );
+
   // Callable by BOTH Admin/BK and Guru so teachers can easily update student photos!
   const updateStudentAvatar = useCallback(
     async (studentId: string, blob: Blob | null, dataUrl: string | null): Promise<{ ok: boolean; error?: string }> => {
@@ -1029,6 +1056,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [user, mode, staffList, persistDemo, loadSupabaseData]
   );
 
+  const deleteStaff = useCallback(
+    async (staffId: string): Promise<{ ok: boolean; error?: string }> => {
+      if (!user || user.role !== "admin") return { ok: false, error: "Khusus Admin/BK." };
+      if (staffId === user.id) return { ok: false, error: "Tidak dapat menghapus akun Anda sendiri yang sedang login." };
+
+      if (mode === "supabase") {
+        const resp = await fetch("/api/admin/staff", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: staffId }),
+        });
+        if (!resp.ok) {
+          // Fallback: try deleting profile directly if service key isn't set
+          const sb = getSupabaseBrowserClient();
+          if (sb) {
+            const { error } = await sb.from("staff_profiles").delete().eq("id", staffId);
+            if (!error) {
+              await loadSupabaseData(user);
+              return { ok: true };
+            }
+          }
+          const data = await resp.json().catch(() => ({}));
+          return { ok: false, error: data.error || "Gagal menghapus akun guru." };
+        }
+        await loadSupabaseData(user);
+        return { ok: true };
+      }
+
+      const next = staffList.filter((s) => s.id !== staffId);
+      setStaffList(next);
+      persistDemo({ staffList: next });
+      return { ok: true };
+    },
+    [user, mode, staffList, persistDemo, loadSupabaseData]
+  );
+
   // === CLASSES (LONG-TERM ACADEMIC YEAR SUPPORT) ===
   const addClass = useCallback(
     async (input: CreateClassInput): Promise<{ ok: boolean; error?: string }> => {
@@ -1180,11 +1243,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         voidPointRecord,
         addStudent,
         updateStudent,
+        deleteStudent,
         updateStudentAvatar,
         updateStudentPhone,
         importStudentsBulk,
         addStaff,
         updateStaff,
+        deleteStaff,
         addClass,
         addRule,
         toggleRuleActive,
