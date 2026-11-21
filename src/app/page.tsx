@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Lock, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, BookOpen, Search, Sparkles } from "lucide-react";
 import { useApp, type PublicSearchHit } from "@/lib/store";
 import { getDisiplinStage } from "@/lib/disiplin";
 import { RulesModal } from "@/components/RulesModal";
@@ -104,103 +104,64 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Search Results Box (Search-to-Reveal Privacy Guard) */}
-      <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        {query.trim().length < 3 ? (
-          <div className="p-8 md:p-10 text-center space-y-2.5">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 mx-auto flex items-center justify-center text-slate-500">
-              <Lock className="w-5 h-5" />
+      {/* Search Results Box (Shown only once a query of >= 3 chars is entered) */}
+      {query.trim().length >= 3 && (
+        <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+          {searching ? (
+            <div className="p-8 text-center text-xs text-slate-500">Mencari data siswa...</div>
+          ) : results.length === 0 ? (
+            <div className="p-8 text-center space-y-1">
+              <div className="text-sm font-bold text-slate-800">Siswa tidak ditemukan</div>
+              <p className="text-xs text-slate-500">Pastikan 10-digit NISN atau ejaan nama siswa sudah benar.</p>
             </div>
-            <h2 className="text-sm font-bold text-slate-900">Pencarian Terjaga Privasi (Search-to-Reveal)</h2>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Demi menjaga privasi siswa, daftar lengkap tidak ditampilkan secara terbuka. Ketik <strong>NISN</strong> atau minimal <strong>3 huruf nama siswa</strong> pada kolom pencarian di atas untuk melihat riwayat poin yang sudah diverifikasi Guru BK.
-            </p>
-          </div>
-        ) : searching ? (
-          <div className="p-8 text-center text-xs text-slate-500">Mencari data siswa...</div>
-        ) : results.length === 0 ? (
-          <div className="p-8 text-center space-y-1">
-            <div className="text-sm font-bold text-slate-800">Siswa tidak ditemukan</div>
-            <p className="text-xs text-slate-500">Pastikan 10-digit NISN atau ejaan nama siswa sudah benar.</p>
-          </div>
-        ) : (
-          <div>
-            <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-700">Hasil Pencarian ({results.length} ditemukan)</span>
-              <span className="text-slate-500">Klik nama siswa untuk melihat riwayat lengkap</span>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {results.map((s) => {
-                const st = getDisiplinStage(s.current_score, s.has_instant_out);
-                const badgeClass =
-                  st.tone === "danger"
-                    ? "bg-rose-50 text-rose-700 border-rose-200"
-                    : st.tone === "warn"
-                    ? "bg-amber-50 text-amber-800 border-amber-200"
-                    : "bg-emerald-50 text-emerald-700 border-emerald-200";
-                return (
-                  <Link
-                    key={s.student_id}
-                    href={`/siswa/${s.nisn}`}
-                    className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 hover:bg-blue-50/40 transition"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar name={s.full_name} src={s.avatar_url} size="md" />
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">
-                          {s.full_name}{" "}
-                          <span className="text-xs font-semibold text-slate-500">• {s.class_name}</span>
-                        </div>
-                        <div className="text-xs text-slate-500 font-mono mt-0.5">
-                          NISN: {s.nisn} • Wali Kelas: {s.wali_kelas_name}
+          ) : (
+            <div>
+              <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-700">Hasil Pencarian ({results.length} ditemukan)</span>
+                <span className="text-slate-500">Klik nama siswa untuk melihat riwayat lengkap</span>
+              </div>
+              <div className="divide-y divide-slate-200">
+                {results.map((s) => {
+                  const st = getDisiplinStage(s.current_score, s.has_instant_out);
+                  const badgeClass =
+                    st.tone === "danger"
+                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : st.tone === "warn"
+                      ? "bg-amber-50 text-amber-800 border-amber-200"
+                      : "bg-emerald-50 text-emerald-700 border-emerald-200";
+                  return (
+                    <Link
+                      key={s.student_id}
+                      href={`/siswa/${s.nisn}`}
+                      className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 hover:bg-blue-50/40 transition"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar name={s.full_name} src={s.avatar_url} size="md" />
+                        <div>
+                          <div className="text-sm font-bold text-slate-900">
+                            {s.full_name}{" "}
+                            <span className="text-xs font-semibold text-slate-500">• {s.class_name}</span>
+                          </div>
+                          <div className="text-xs text-slate-500 font-mono mt-0.5">
+                            NISN: {s.nisn} • Wali Kelas: {s.wali_kelas_name}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}`}>
-                        {st.shortLabel}
-                      </span>
-                      <span className="font-mono text-sm font-bold text-slate-900">{s.current_score} pt</span>
-                      <ArrowRight className="w-4 h-4 text-blue-700" />
-                    </div>
-                  </Link>
-                );
-              })}
+                      <div className="flex items-center gap-2.5">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}`}>
+                          {st.shortLabel}
+                        </span>
+                        <span className="font-mono text-sm font-bold text-slate-900">{s.current_score} pt</span>
+                        <ArrowRight className="w-4 h-4 text-blue-700" />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
-      </section>
-
-      {/* Info Strip */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-50 text-blue-700">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900">93 Siswa • 7 Kelas Utama</div>
-            <p className="text-xs text-slate-500 mt-0.5">Mencakup jurusan TKJ, TSM, dan BC berdasarkan data resmi Dapodik TP 2026/2027.</p>
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900">Terverifikasi Guru BK</div>
-            <p className="text-xs text-slate-500 mt-0.5">Setiap laporan pelanggaran guru diperiksa oleh BK terlebih dahulu demi keadilan dan transparansi.</p>
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-amber-50 text-amber-700">
-            <BookOpen className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900">Program Penebusan Poin</div>
-            <p className="text-xs text-slate-500 mt-0.5">Poin dapat dikurangi melalui Hafalan Juz 30, Kerja Bakti, Membantu Guru, OSIS, dan Prestasi.</p>
-          </div>
-        </div>
-      </section>
+          )}
+        </section>
+      )}
 
       {rulesOpen && <RulesModal onClose={() => setRulesOpen(false)} />}
     </div>
