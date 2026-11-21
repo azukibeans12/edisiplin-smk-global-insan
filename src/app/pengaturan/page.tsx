@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Camera, Pencil, Plus, RotateCcw, ShieldCheck, Trash2, UserPlus, X } from "lucide-react";
+import { Camera, Check, Copy, Eye, EyeOff, KeyRound, Pencil, Plus, RotateCcw, ShieldCheck, Shuffle, Trash2, UserPlus, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { DISIPLIN_STAGES } from "@/lib/disiplin";
 import { compressImageFile } from "@/lib/image-compress";
@@ -23,6 +23,7 @@ export default function PengaturanPage() {
     addStaff,
     updateStaff,
     deleteStaff,
+    resetStaffPassword,
     addClass,
     resetDemoData,
   } = useApp();
@@ -56,6 +57,15 @@ export default function PengaturanPage() {
   const [deleteTarget, setDeleteTarget] = useState<StaffProfile | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState("");
+
+  // Reset Password Guru Modal
+  const [resetTarget, setResetTarget] = useState<StaffProfile | null>(null);
+  const [newPass, setNewPass] = useState("");
+  const [showPass, setShowPass] = useState(true);
+  const [resetting, setResetting] = useState(false);
+  const [resetErr, setResetErr] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [copiedLogin, setCopiedLogin] = useState(false);
 
   // Add Class Form
   const [clsName, setClsName] = useState("");
@@ -119,6 +129,47 @@ export default function PengaturanPage() {
       setSClearPhoto(false);
     } catch (err) {
       setSErr(err instanceof Error ? err.message : "Gagal memproses foto.");
+    }
+  };
+
+  const openResetPassword = (st: StaffProfile) => {
+    setResetTarget(st);
+    setNewPass("");
+    setShowPass(true);
+    setResetErr("");
+    setResetSuccess(false);
+    setCopiedLogin(false);
+  };
+
+  const generateRandomPassword = () => {
+    const num = Math.floor(1000 + Math.random() * 9000);
+    setNewPass(`insan${num}`);
+    setShowPass(true);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetTarget) return;
+    setResetErr("");
+    setResetting(true);
+    const res = await resetStaffPassword(resetTarget.id, newPass.trim());
+    setResetting(false);
+    if (!res.ok) {
+      setResetErr(res.error || "Gagal mereset kata sandi.");
+      return;
+    }
+    setResetSuccess(true);
+  };
+
+  const copyLoginInfo = async () => {
+    if (!resetTarget) return;
+    const text = `Info Login E-Disiplin SMK Global Insan:\nUsername: ${resetTarget.username}\nKata Sandi Baru: ${newPass.trim()}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedLogin(true);
+      setTimeout(() => setCopiedLogin(false), 2000);
+    } catch {
+      // Ignore clipboard errors
     }
   };
 
@@ -300,6 +351,13 @@ export default function PengaturanPage() {
                     >
                       {st.role === "admin" ? "Admin / BK" : "Guru"}
                     </span>
+                    <button
+                      onClick={() => openResetPassword(st)}
+                      title={`Reset Password ${st.full_name}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 font-semibold hover:bg-amber-100"
+                    >
+                      <KeyRound className="w-3 h-3" /> Reset PW
+                    </button>
                     <button
                       onClick={() => openEditStaff(st)}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50"
@@ -595,6 +653,123 @@ export default function PengaturanPage() {
           onCancel={() => setDeleteTarget(null)}
           onConfirm={confirmDeleteStaff}
         />
+      )}
+
+      {/* RESET PASSWORD GURU MODAL */}
+      {resetTarget && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => !resetting && setResetTarget(null)}
+        >
+          <form
+            onSubmit={handleResetPassword}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4 text-xs"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <KeyRound className="w-4 h-4 text-amber-600" />
+                Reset Password Guru
+              </h2>
+              <button type="button" onClick={() => setResetTarget(null)}>
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <Avatar name={resetTarget.full_name} src={resetTarget.avatar_url} size="md" variant="staff" />
+              <div>
+                <div className="font-bold text-slate-900">{resetTarget.full_name}</div>
+                <div className="text-[11px] font-mono text-slate-500">Username: @{resetTarget.username}</div>
+              </div>
+            </div>
+
+            {resetSuccess ? (
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
+                  <div className="font-bold">✓ Kata sandi berhasil diperbarui!</div>
+                  <p className="text-[11px]">
+                    Bagikan username <strong className="font-mono">{resetTarget.username}</strong> dan kata sandi baru{" "}
+                    <strong className="font-mono">{newPass}</strong> kepada guru yang bersangkutan.
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={copyLoginInfo}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-white font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    {copiedLogin ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedLogin ? "Tersalin!" : "Salin Info Login"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResetTarget(null)}
+                    className="px-4 py-2 rounded-lg bg-blue-700 text-white font-bold hover:bg-blue-800"
+                  >
+                    Selesai
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-slate-700">Kata Sandi Baru * (min. 6 karakter)</label>
+                    <button
+                      type="button"
+                      onClick={generateRandomPassword}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 hover:underline"
+                    >
+                      <Shuffle className="w-3 h-3" /> Buat Acak
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      required
+                      minLength={6}
+                      type={showPass ? "text" : "password"}
+                      value={newPass}
+                      onChange={(e) => setNewPass(e.target.value)}
+                      placeholder="Masukkan kata sandi baru..."
+                      className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPass(!showPass)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                    >
+                      {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {resetErr && (
+                  <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-semibold">
+                    {resetErr}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setResetTarget(null)}
+                    className="px-3.5 py-2 rounded-lg border border-slate-300 font-semibold"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetting}
+                    className="px-4 py-2 rounded-lg bg-amber-600 text-white font-bold hover:bg-amber-700 disabled:opacity-50"
+                  >
+                    {resetting ? "Menyimpan..." : "Simpan Password Baru"}
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
+        </div>
       )}
     </div>
   );

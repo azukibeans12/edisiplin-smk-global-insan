@@ -2,19 +2,49 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeUsername, toAuthEmail } from "@/lib/auth-utils";
 
-export async function POST(req: Request) {
+function getAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) return null;
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
-  if (!supabaseUrl || !serviceKey) {
+async function verifyAdminRequest(req: Request, adminClient: NonNullable<ReturnType<typeof getAdminClient>>) {
+  const authHeader = req.headers.get("authorization") || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  if (!token) return { ok: false, error: "Sesi login tidak ditemukan. Silakan login ulang." };
+
+  const { data: userData, error: userErr } = await adminClient.auth.getUser(token);
+  if (userErr || !userData.user) return { ok: false, error: "Sesi tidak valid. Silakan login ulang." };
+
+  const { data: prof } = await adminClient
+    .from("staff_profiles")
+    .select("role, is_active")
+    .eq("id", userData.user.id)
+    .single();
+
+  if (!prof || prof.role !== "admin" || !prof.is_active) {
+    return { ok: false, error: "Akses ditolak: khusus Admin / Guru BK." };
+  }
+  return { ok: true, callerId: userData.user.id };
+}
+
+export async function POST(req: Request) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
     return NextResponse.json(
       {
         error:
-          "SUPABASE_SERVICE_ROLE_KEY belum diatur di .env.local / Vercel. Tambahkan SUPABASE_SERVICE_ROLE_KEY agar Admin dapat membuat akun Guru langsung dari aplikasi.",
+          "SUPABASE_SERVICE_ROLE_KEY belum diatur di .env.local / Vercel. Tambahkan SUPABASE_SERVICE_ROLE_KEY agar Admin dapat mengelola akun Guru langsung dari aplikasi.",
       },
       { status: 501 }
     );
   }
+
+  const check = await verifyAdminRequest(req, adminClient);
+  if (!check.ok) return NextResponse.json({ error: check.error }, { status: 403 });
 
   try {
     const body = await req.json();
@@ -36,10 +66,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    const adminClient = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
 
     const { data: authData, error: authErr } = await adminClient.auth.admin.createUser({
       email: authEmail,
@@ -75,11 +101,52 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export async function PATCH(req: Request) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
+    return NextResponse.json(
+      {
+        error:
+          "SUPABASE_SERVICE_ROLE_KEY belum diatur di .env.local / Vercel. Tambahkan SUPABASE_SERVICE_ROLE_KEY untuk mereset kata sandi guru langsung dari aplikasi.",
+      },
+      { status: 501 }
+    );
+  }
 
-  if (!supabaseUrl || !serviceKey) {
+  const check = await verifyAdminRequest(req, adminClient);
+  if (!check.ok) return NextResponse.json({ error: check.error }, { status: 403 });
+
+  try {
+    const body = await req.json();
+    const { id, newPassword } = body as { id?: string; newPassword?: string };
+
+    if (!id || !newPassword || newPassword.length < 6) {
+      return NextResponse.json(
+        { error: "Kata sandi baru wajib diisi (minimal 6 karakter)." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await adminClient.auth.admin.updateUserById(id, {
+      password: newPassword,
+    });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Terjadi kesalahan server." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
     return NextResponse.json(
       {
         error:
@@ -89,18 +156,19 @@ export async function DELETE(req: Request) {
     );
   }
 
+  const check = await verifyAdminRequest(req, adminClient);
+  if (!check.ok) return NextResponse.json({ error: check.error }, { status: 403 });
+
   try {
     const body = await req.json();
     const { id } = body as { id?: string };
     if (!id) {
       return NextResponse.json({ error: "ID guru tidak valid." }, { status: 400 });
     }
+    if (id === check.callerId) {
+      return NextResponse.json({ error: "Tidak dapat menghapus akun Anda sendiri." }, { status: 400 });
+    }
 
-    const adminClient = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    // Deletes from auth.users which cascades to staff_profiles (point_records keep reported_by_name)
     const { error } = await adminClient.auth.admin.deleteUser(id);
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

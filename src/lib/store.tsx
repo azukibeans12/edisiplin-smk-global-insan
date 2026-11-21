@@ -149,6 +149,7 @@ interface AppContextValue {
   addStaff: (input: CreateStaffInput) => Promise<{ ok: boolean; error?: string }>;
   updateStaff: (staffId: string, input: UpdateStaffInput) => Promise<{ ok: boolean; error?: string }>;
   deleteStaff: (staffId: string) => Promise<{ ok: boolean; error?: string }>;
+  resetStaffPassword: (staffId: string, newPassword: string) => Promise<{ ok: boolean; error?: string }>;
   addClass: (input: CreateClassInput) => Promise<{ ok: boolean; error?: string }>;
   // Rules & Warnings
   addRule: (input: CreateRuleInput) => Promise<{ ok: boolean; error?: string }>;
@@ -947,6 +948,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (mode === "supabase") {
+        const sb = getSupabaseBrowserClient();
+        const token = (await sb?.auth.getSession())?.data.session?.access_token || "";
         let avatarUrl: string | null = null;
         if (input.avatar_file) {
           try {
@@ -957,7 +960,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         const resp = await fetch("/api/admin/staff", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             full_name: input.full_name.trim(),
             username: cleanUser,
@@ -1062,14 +1068,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (staffId === user.id) return { ok: false, error: "Tidak dapat menghapus akun Anda sendiri yang sedang login." };
 
       if (mode === "supabase") {
+        const sb = getSupabaseBrowserClient();
+        const token = (await sb?.auth.getSession())?.data.session?.access_token || "";
         const resp = await fetch("/api/admin/staff", {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ id: staffId }),
         });
         if (!resp.ok) {
-          // Fallback: try deleting profile directly if service key isn't set
-          const sb = getSupabaseBrowserClient();
           if (sb) {
             const { error } = await sb.from("staff_profiles").delete().eq("id", staffId);
             if (!error) {
@@ -1090,6 +1099,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return { ok: true };
     },
     [user, mode, staffList, persistDemo, loadSupabaseData]
+  );
+
+  const resetStaffPassword = useCallback(
+    async (staffId: string, newPassword: string): Promise<{ ok: boolean; error?: string }> => {
+      if (!user || user.role !== "admin") return { ok: false, error: "Khusus Admin/BK." };
+      if (!newPassword || newPassword.length < 6) {
+        return { ok: false, error: "Kata sandi baru minimal 6 karakter." };
+      }
+
+      if (mode === "supabase") {
+        const sb = getSupabaseBrowserClient();
+        const token = (await sb?.auth.getSession())?.data.session?.access_token || "";
+        const resp = await fetch("/api/admin/staff", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ id: staffId, newPassword }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) return { ok: false, error: data.error || "Gagal mereset kata sandi." };
+        return { ok: true };
+      }
+
+      return { ok: true };
+    },
+    [user, mode]
   );
 
   // === CLASSES (LONG-TERM ACADEMIC YEAR SUPPORT) ===
@@ -1250,6 +1287,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addStaff,
         updateStaff,
         deleteStaff,
+        resetStaffPassword,
         addClass,
         addRule,
         toggleRuleActive,
